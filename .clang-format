@@ -1,0 +1,5 @@
+Language: C
+BasedOnStyle: Microsoft
+BreakBeforeBraces: Allman
+UseTab: Always
+TabWidth: 4

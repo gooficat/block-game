@@ -1,0 +1,42 @@
+Window:
+    Input:
+        KeysPressed[]
+        Mouse:
+            ButtonsPressed[]
+            MousePos[2]
+    State?
+        Exiting
+        Focus
+        Background
+        Minimized
+        
+
+Renderer:
+    *Window
+    *ResourceManager
+    Queue
+
+ResourceManager:
+    Shaders[]
+    Models[]
+    Textures[]
+    Data
+
+World:
+    Entities
+    Objects
+
+Timer:
+    Queue:
+        Tasks[]:
+            Time
+            Callback
+    Frame:
+        LastTime
+        DeltaTime
+
+Loop:
+    Timer::StartFrame
+    World::Update
+    Renderer::Render
+    Timer::EndFrame
