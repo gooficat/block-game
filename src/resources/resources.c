@@ -12,9 +12,35 @@ void resource_manager_init(resource_manager_s *manager)
 	memset(manager, 0, sizeof *manager);
 }
 
+static char *resource_manager_dump_file(char const *path)
+{
+	FILE *file;
+	long len;
+	size_t real;
+	char *data;
+
+	file = fopen(path, "r");
+	fseek(file, 0l, SEEK_END);
+	len = ftell(file);
+	rewind(file);
+	data = malloc(len + 1);
+	real = fread(data, 1, len, file);
+	if (real != (size_t)len)
+	{
+		data = realloc(data, real + 1);
+	}
+	data[real] = '\0';
+	fclose(file);
+	return data;
+}
+
 static GLuint resource_manager_create_shader_piece(char const *path)
 {
 	GLuint id;
+	char *src;
+	int succ;
+	char log[512];
+	succ = 0;
 	{
 		char const *suff;
 		suff = path + strlen(path) - 4;
@@ -38,6 +64,22 @@ static GLuint resource_manager_create_shader_piece(char const *path)
 		}
 		id = glCreateShader(kind);
 	}
+
+	src = resource_manager_dump_file(path);
+
+	glShaderSource(id, 1, (const GLchar *const *)&src, NULL);
+	glCompileShader(id);
+	glGetShaderiv(id, GL_COMPILE_STATUS, &succ);
+	if (!succ)
+	{
+		glGetShaderInfoLog(id, sizeof log, NULL, log);
+		fprintf(stderr, "SHADER PIECE ERROR: %s\n", log);
+		exit(EXIT_FAILURE);
+		free(src);
+	}
+
+	free(src);
+
 	return id;
 }
 
@@ -50,9 +92,11 @@ size_t resource_manager_add_shader(resource_manager_s *manager, char const **pat
 		GLuint *vals;
 		size_t len;
 	} pieces;
+	int succ;
+	char log[512];
 	pieces.vals = NULL;
 	pieces.len = 0;
-
+	succ = 0;
 	while (paths[pieces.len])
 	{
 		size_t idx;
@@ -67,6 +111,14 @@ size_t resource_manager_add_shader(resource_manager_s *manager, char const **pat
 		glAttachShader(shader, pieces.vals[i]);
 	}
 	glLinkProgram(shader);
+
+	glGetProgramiv(shader, GL_LINK_STATUS, &succ);
+	if (!succ)
+	{
+		glGetProgramInfoLog(shader, sizeof log, NULL, log);
+		fprintf(stderr, "SHADER PROGRAM ERROR: %s\n", log);
+		exit(EXIT_FAILURE);
+	}
 	for (i = 0; i < pieces.len; ++i)
 	{
 		glDeleteShader(pieces.vals[i]);
@@ -101,6 +153,9 @@ static void resource_manager_read_mesh_obj(struct vert_list *verts, struct ind_l
 			inds->vals = realloc(inds->vals, inds->len * sizeof *inds->vals);
 			sscanf(buffer, "f %" SCNu32 " %" SCNu32 "%" SCNu32, &inds->vals[i][0], &inds->vals[i][1],
 				   &inds->vals[i][2]);
+			--inds->vals[i][0];
+			--inds->vals[i][1];
+			--inds->vals[i][2];
 			break;
 		default:
 			break;

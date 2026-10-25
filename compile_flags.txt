@@ -9,3 +9,4 @@
 -lglfw
 -lGLEW
 -lGL
+-lm
