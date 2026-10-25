@@ -72,4 +72,5 @@ void window_update(window_s *window)
 void window_close(window_s *window)
 {
     glfwDestroyWindow(window->internal.window);
+	glfwTerminate();
 }

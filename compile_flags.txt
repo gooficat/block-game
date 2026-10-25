@@ -7,3 +7,5 @@
 -std=c23
 -I./src
 -lglfw
+-lGLEW
+-lGL
